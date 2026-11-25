@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-herdshield}
+      POSTGRES_USER: ${POSTGRES_USER:-herdshield}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-herdshield}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-herdshield} -d ${POSTGRES_DB:-herdshield}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-herdshield}
+      DB_USERNAME: ${POSTGRES_USER:-herdshield}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-herdshield}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
+      CACHE_MAXIMUM_SIZE: ${CACHE_MAXIMUM_SIZE:-10000}
+      CACHE_LOADER_THREADS: ${CACHE_LOADER_THREADS:-32}
+      CACHE_LOADER_QUEUE_CAPACITY: ${CACHE_LOADER_QUEUE_CAPACITY:-2000}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
