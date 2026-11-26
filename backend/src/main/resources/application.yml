@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: herdshield
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/herdshield}
+    username: ${DB_USERNAME:herdshield}
+    password: ${DB_PASSWORD:herdshield}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      connection-timeout: 3000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  mvc:
+    problemdetails:
+      enabled: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+herdshield:
+  maximum-cache-size: ${CACHE_MAXIMUM_SIZE:10000}
+  loader-threads: ${CACHE_LOADER_THREADS:32}
+  loader-queue-capacity: ${CACHE_LOADER_QUEUE_CAPACITY:2000}
+  default-ttl: ${CACHE_DEFAULT_TTL:30s}
+  default-stale-ttl: ${CACHE_DEFAULT_STALE_TTL:30s}
+  default-negative-ttl: ${CACHE_DEFAULT_NEGATIVE_TTL:5s}
+  default-load-timeout: ${CACHE_DEFAULT_LOAD_TIMEOUT:5s}
